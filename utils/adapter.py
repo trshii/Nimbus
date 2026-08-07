@@ -1,6 +1,6 @@
 #pyright: strict
 
-from .utilities import TravelMode
+from utils.utilities import TravelMode
 
 class ORSProfileAdapter:
     def __init__(self) -> None:

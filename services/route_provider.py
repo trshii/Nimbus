@@ -5,11 +5,11 @@ from utils.utilities import *
 from utils.adapter import ORSProfileAdapter
 from typing import List, Any, Dict
 
-class RouterPlan:
+class RouteProvider:
     def __init__(self) -> None:
         pass
         
-    def get_open_route(self, api_key: str, mode: TravelMode, origin: List[int], destination: List[int]) -> Dict[str, Any] | None:
+    def get_open_route(self, api_key: str, mode: TravelMode, origin: List[float], destination: List[float]) -> Dict[str, Any] | None:
         """Fetches Route data from OpenRouteService, returns data via dict
 
         Args:
@@ -24,7 +24,7 @@ class RouterPlan:
         
         ors_adapter = ORSProfileAdapter()
         profile: str = ors_adapter.get_travel_str(mode)
-        url = f"https://api.heigit.org/v2/directions/{profile}"
+        url = f"https://api.heigit.org/openrouteservice/v2/directions/{profile}"
         
         headers = {
             "Authorization": api_key,

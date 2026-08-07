@@ -2,13 +2,19 @@
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import List
+from typing import List, Tuple
 from enum import auto, Enum
+
+type coord = Tuple[float, float]
 
 @dataclass
 class Coordinate:
-    longitude: float
-    latitude: float
+    lon: float
+    lat: float
+    
+    @property
+    def coord_list(self) -> list[float]:
+        return [self.lon, self.lat]
     
 @dataclass
 class Waypoint:
