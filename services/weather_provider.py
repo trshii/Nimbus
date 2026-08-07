@@ -3,29 +3,31 @@
 import requests
 from typing import List
 from datetime import datetime
+from utils.utilities import Coordinate
 
 class WeatherProvider:
     def __init__(self, timeout: float = 5.0) -> None:
         self.timeout = timeout
         self.url = "https://api.open-meteo.com/v1/forecast"
         
-    def get_rain_probability(self, lat: float, lon: float, eta: datetime) -> int:
+    def get_rain_probability(self, point: Coordinate, eta: datetime) -> int:
         """Queries Open-Meteo for a coordinate and snaps the ETA to the closest hour. Returns probability as int.
 
         Args:
-            lat (float): Latitude
-            lon (float): Longitude
+            point (Coordinate): Coordinate
             eta (datetime): Current Time
 
         Returns:
             int: Returns probability as int n (n%)
         """
+        lon, lat = point.lon, point.lat
+        
         params = {
-            "latitude": lat,
             "longitude": lon,
-            "hourly": "precipitation-probability",
+            "latitude": lat,
+            "hourly": "precipitation_probability",
             "timezone": "Asia/Manila",
-            "forecast-days": 2,
+            "forecast_days": 2,
             "timeformat": "unixtime"
         }
         
