@@ -8,7 +8,7 @@ from utils.math_calc import filter_waypoints
 from utils.utilities import *
 from typing import *
 
-class MainController:
+class MainModel:
     def __init__(self, api_key: str, eta: datetime) -> None:
         self.origin: Coordinate = Coordinate(lon=121.0676, lat=14.5542, name="Buting, Pasig City")
         self.destination: Coordinate = Coordinate(lon=121.0633, lat=14.6549, name="UP Campus, Diliman, QC")

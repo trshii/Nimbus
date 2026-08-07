@@ -3,7 +3,7 @@
 import os
 from utils.utilities import *
 from dotenv import load_dotenv
-from controller import MainController
+from model import MainModel
 from datetime import datetime
 
 if __name__ == "__main__":
@@ -16,7 +16,7 @@ if __name__ == "__main__":
     if ORS_API_KEY is None:
         raise ValueError("API Key does not exist!")
     
-    controller = MainController(ORS_API_KEY, time_start)
+    controller = MainModel(ORS_API_KEY, time_start)
     controller.run()
 
     
