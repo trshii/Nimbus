@@ -102,9 +102,9 @@ geocoder = GeocoderProvider(API_KEY)
 
 # ---- Session state ----
 if "origin" not in st.session_state:
-    st.session_state.origin = {"lat": 14.5542, "lon": 121.0676, "name": "Buting, Pasig City"}
+    st.session_state.origin = {"lat": 14.584447, "lon": 121.056770, "name": "SM Megamall"}
 if "destination" not in st.session_state:
-    st.session_state.destination = {"lat": 14.6549, "lon": 121.0633, "name": "UP Campus, Diliman, QC"}
+    st.session_state.destination = {"lat": 14.6549, "lon": 121.0633, "name": "University of the Philippines Diliman"}
 if "picking" not in st.session_state:
     st.session_state.picking = "Origin"
 if "route_plan" not in st.session_state:
