@@ -22,7 +22,7 @@ st.set_page_config(page_title="Nimbus", page_icon="🌦️", layout="wide")
 
 @st.dialog("Welcome to Nimbus! ⛅")
 def tutorial_modal():
-    st.write("Plan your two-wheeler routes and avoid the rain. Here is how it works:")
+    st.write("Plan your ride routes and avoid the rain. Here is how it works:")
     
     st.markdown("""
     * **Set Locations:** Use the sidebar to search for your start and end points (Address needs to be specific according to OpenStreetMap). You can also click directly on the map to drop a pin.
