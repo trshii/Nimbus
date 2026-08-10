@@ -24,7 +24,6 @@ class ViewGUI:
     
     def __init__(self):
         # Create a dedicated placeholder in the UI for the results.
-        # Everything rendered by this class will go inside this box.
         self._ui_container = st.empty()
 
     def clear_view(self) -> None:
@@ -37,28 +36,36 @@ class ViewGUI:
         
         # 2. Render all new elements INSIDE the placeholder
         with self._ui_container.container():
-            col1, col2, col3 = st.columns(3)
+            # Expanded to 4 columns to include Arrival Time
+            col1, col2, col3, col4 = st.columns(4)
             col1.metric("Origin", route_plan.origin)
             col2.metric("Destination", route_plan.destination)
             col3.metric("Departure", route_plan.departure_time.strftime("%H:%M, %b %d"))
+            
+            # The arrival time is exactly the ETA of the final waypoint
+            wps = route_plan.waypoints
+            arrival_time = wps[-1].location.eta
+            col4.metric("Arrival", arrival_time.strftime("%H:%M, %b %d"))
 
             st.subheader("Route Map")
-            wps = route_plan.waypoints
             center = wps[len(wps) // 2].location
             fmap = folium.Map(location=[center.lat, center.lon], zoom_start=12)
 
             path = [(wp.location.lat, wp.location.lon) for wp in wps]
             folium.PolyLine(path, color="#3b82f6", weight=4, opacity=0.7).add_to(fmap)
 
-            # Coverage-zone radius: half the min waypoint spacing, so neighboring
-            # zones tile the route without heavily overlapping each other.
+            # Coverage-zone radius: half the min waypoint spacing
             zone_radius_m = (DEFAULT_WAYPOINT_THRESHOLD_KM / 2) * 1000
 
             for idx, wp in enumerate(wps, start=1):
                 loc = wp.location
                 color = _rain_color(wp.rain_probability)
-                popup = f"{idx}. {loc.name}<br>Rain chance: {wp.rain_probability}%"
-                tooltip = f"{idx}. {loc.name} — {wp.rain_probability}%"
+                
+                # Formatted ETA for the map tooltips
+                formatted_eta = loc.eta.strftime("%I:%M %p")
+                
+                popup = f"{idx}. {loc.name}<br>ETA: {formatted_eta}<br>Rain chance: {wp.rain_probability}%"
+                tooltip = f"{idx}. {loc.name} — {formatted_eta} — {wp.rain_probability}%"
 
                 # Low-opacity area = zone this weather sample stands in for
                 folium.Circle(
@@ -87,16 +94,17 @@ class ViewGUI:
                     tooltip=tooltip,
                 ).add_to(fmap)
 
-            # Note: We use a dynamic key based on the route to prevent Streamlit 
-            # from throwing duplicate key errors if the map rapidly re-renders.
             map_key = f"route_map_{route_plan.origin}_{route_plan.departure_time.timestamp()}"
             st_folium(fmap, width=None, height=450, key=map_key)
 
             st.subheader("Waypoint Summary")
+            
+            # Added the ETA column to the dictionary compilation
             rows = [
                 {
                     "#": idx,
                     "Location": wp.location.name,
+                    "ETA": wp.location.eta.strftime("%I:%M %p"),
                     "Rain Chance (%)": wp.rain_probability,
                 }
                 for idx, wp in enumerate(wps, start=1)

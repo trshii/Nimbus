@@ -16,11 +16,13 @@ class MainModel:
         self.origin: Coordinate = Coordinate(lon=121.0676, 
                                              lat=14.5542, 
                                              name="Buting, Pasig City",
-                                             idx=None)
+                                             idx=None,
+                                             eta=curr_time)
         self.destination: Coordinate = Coordinate(lon=121.0633, 
                                                   lat=14.6549, 
                                                   name="UP Campus, Diliman, QC",
-                                                  idx=None)
+                                                  idx=None,
+                                                  eta=None)
         self.mode: TravelMode = travel_mode
         
         # api info
@@ -32,10 +34,14 @@ class MainModel:
         self.route_coord_list: List[Coordinate] = []
         self.rain_probability: List[float] = []
         self.waypoints: List[Waypoint] = []
-        self.curr_time: datetime = curr_time
+        
         self.route_summary: Dict[str, Any] = {}
-        self.route_duration: float | None = None 
-        self.route_distance: float | None = None
+        self.route_duration: Optional[float] = None 
+        self.route_distance: Optional[float] = None
+        
+        self.waypoint_eta: List[float] = []
+        self.departure_time: datetime = curr_time
+        self.arrival_time: Optional[datetime] = None  
         
         
     def set_route_info(self) -> None:
@@ -64,12 +70,14 @@ class MainModel:
         decoded_geometry: List[coord] = polyline.decode(encoded_geometry)
         # print(f"Initial Node Count: {len(decoded_geometry)}")
         
-        idx_to_name_map = self.route_api.get_route_steps(self.raw_route_plan)
+        idx_to_name_map = self.route_api.get_route_steps(self.raw_route_plan, 
+                                                         curr_time=self.departure_time)
         
         # convert coordinates into Coordinate dataclass
         for idx, (lat, lon) in enumerate(decoded_geometry):
-            name = idx_to_name_map[idx]
-            point = Coordinate(lon, lat, name=name, idx=idx)
+            name = idx_to_name_map[idx].get("name", "-")
+            eta = idx_to_name_map[idx].get("eta_dt", self.departure_time)
+            point = Coordinate(lon, lat, name=name, idx=idx, eta=eta)
             self.route_coord_list.append(point)
         self.node_count = len(self.route_coord_list)
         
@@ -84,14 +92,18 @@ class MainModel:
     def set_weather_for_coords(self) -> None:
         weather_api = WeatherProvider()
         for point in self.route_coord_list:
-            prob = weather_api.get_rain_probability(point, self.curr_time)
+            assert isinstance(point.eta, datetime)
+            prob = weather_api.get_rain_probability(point, point.eta)
             self.rain_probability.append(prob)
             
         # print(f"Rain probability for each point: {self.rain_probability}")
             
     def set_waypoints(self) -> None:
         for idx, point in enumerate(self.route_coord_list):
-            waypoint = Waypoint(point, self.rain_probability[idx])
+            assert isinstance(point.eta, datetime)
+            waypoint = Waypoint(point, 
+                                self.rain_probability[idx], 
+                                point.eta)
             self.waypoints.append(waypoint)
             
     def set_route_plan(self) -> None:
@@ -102,6 +114,6 @@ class MainModel:
         
         self.route_plan: RoutePlan = RoutePlan(self.origin.name, 
                                                self.destination.name, 
-                                               self.curr_time, 
+                                               self.departure_time, 
                                                self.waypoints)
         

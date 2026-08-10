@@ -13,6 +13,7 @@ class Coordinate:
     lat: float
     idx: Optional[int]
     name: Optional[str]
+    eta: Optional[datetime]
     
     @property
     def coord_list(self) -> list[float]:
@@ -22,7 +23,7 @@ class Coordinate:
 class Waypoint:
     location: Coordinate
     rain_probability: float
-   #eta: datetime
+    eta: datetime
     
 @dataclass 
 class RoutePlan:

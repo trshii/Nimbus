@@ -4,6 +4,7 @@ import requests
 from utils.utilities import *
 from utils.adapter import ORSProfileAdapter
 from typing import List, Any, Dict
+from datetime import timedelta
 
 class RouteProvider:
     def __init__(self) -> None:
@@ -51,30 +52,45 @@ class RouteProvider:
             print(f"Error fetching route: {e}")
             return None
         
-    def get_route_steps(self, data: Dict[str, Any]) -> Dict[int, str]:
+
+
+    def get_route_steps(self, data: Dict[str, Any], curr_time: datetime) -> Dict[int, Dict[str, Any]]:
         route = data['routes'][0]
-        
         route_waypts_steps: List[Dict[str, Any]] = route['segments'][0]['steps']
-        
         route_waypts_len = route['way_points'][-1] + 1
         
-        route_waypts_idx_name_map: Dict[int, str] = {}
+        route_waypts_idx_map: Dict[int, Dict[str, Any]] = {}
+        
+        cumulative_seconds = 0.0
         
         for step in route_waypts_steps:
             start_idx, end_idx = step["way_points"]
             step_name: str = step["name"]
             
+            step_duration: float = step["duration"] 
+            
+            nodes_in_step = end_idx - start_idx
+            
+            time_per_node = step_duration / nodes_in_step if nodes_in_step > 0 else 0
+            
             for i in range(start_idx, end_idx):
-                route_waypts_idx_name_map[i] = step_name
+                route_waypts_idx_map[i] = {
+                    "name": step_name,
+                    "eta_dt": curr_time + timedelta(seconds=cumulative_seconds)
+                }
+                cumulative_seconds += time_per_node
                 
         if route_waypts_steps:
             last_step = route_waypts_steps[-1]
             last_idx = last_step["way_points"][1]
-            route_waypts_idx_name_map[last_idx] = last_step["name"]
+            route_waypts_idx_map[last_idx] = {
+                "name": last_step["name"],
+                "eta_dt": curr_time + timedelta(seconds=cumulative_seconds)
+            }
 
-        assert len(route_waypts_idx_name_map) == route_waypts_len
+        assert len(route_waypts_idx_map) == route_waypts_len
         
-        return route_waypts_idx_name_map
+        return route_waypts_idx_map
 
     def get_route_summary(self, data: Dict[str, Any]) -> Dict[str, float]:
         route_summ: Dict[str, float] = data['routes'][0]['summary']

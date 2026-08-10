@@ -151,12 +151,14 @@ if submitted:
         lat=st.session_state.origin["lat"],
         name=st.session_state.origin["name"],
         idx=None,
+        eta=curr_time
     )
     m.destination = Coordinate(
         lon=st.session_state.destination["lon"],
         lat=st.session_state.destination["lat"],
         name=st.session_state.destination["name"],
         idx=None,
+        eta=None
     )
 
     c = MainController(m, ViewGUI())

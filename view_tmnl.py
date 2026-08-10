@@ -15,4 +15,5 @@ class ViewTmnl:
             print(f"{idx + 1}. ")
             print(f"{waypoint.location.name}")
             print(f"Rain Chance: {waypoint.rain_probability}")
+            print(f"ETA: {waypoint.eta}")
             print()
