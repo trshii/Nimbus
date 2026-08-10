@@ -198,12 +198,13 @@ with st.expander("📍 Pick points on the map", expanded=(st.session_state.route
     )
     folium.Marker(
         [st.session_state.origin["lat"], st.session_state.origin["lon"]],
-        tooltip="Origin",
+        tooltip=st.session_state.origin["name"],
         icon=folium.Icon(color="green"),
     ).add_to(pick_map)
+    
     folium.Marker(
         [st.session_state.destination["lat"], st.session_state.destination["lon"]],
-        tooltip="Destination",
+        tooltip=st.session_state.destination["name"],
         icon=folium.Icon(color="red"),
     ).add_to(pick_map)
 
