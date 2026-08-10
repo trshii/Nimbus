@@ -67,14 +67,14 @@ class MainModel:
         
         # convert route plan geometry polyline to List[Tuple[lon, lat]]
         encoded_geometry = self.raw_route_plan['routes'][0]['geometry']
-        decoded_geometry: List[coord] = polyline.decode(encoded_geometry)
+        self.decoded_geometry: List[coord] = polyline.decode(encoded_geometry)
         # print(f"Initial Node Count: {len(decoded_geometry)}")
         
         idx_to_name_map = self.route_api.get_route_steps(self.raw_route_plan, 
                                                          curr_time=self.departure_time)
         
         # convert coordinates into Coordinate dataclass
-        for idx, (lat, lon) in enumerate(decoded_geometry):
+        for idx, (lat, lon) in enumerate(self.decoded_geometry):
             name = idx_to_name_map[idx].get("name", "-")
             eta = idx_to_name_map[idx].get("eta_dt", self.departure_time)
             point = Coordinate(lon, lat, name=name, idx=idx, eta=eta)
@@ -115,5 +115,6 @@ class MainModel:
         self.route_plan: RoutePlan = RoutePlan(self.origin.name, 
                                                self.destination.name, 
                                                self.departure_time, 
-                                               self.waypoints)
+                                               self.waypoints,
+                                               self.decoded_geometry)
         

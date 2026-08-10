@@ -31,6 +31,7 @@ class RoutePlan:
     destination: str
     departure_time: datetime
     waypoints: List[Waypoint]
+    full_geometry: List[Tuple[float, float]]
     
 class TravelMode(Enum):
     DRIVING = auto()
