@@ -51,8 +51,8 @@ class ViewGUI:
             center = wps[len(wps) // 2].location
             fmap = folium.Map(location=[center.lat, center.lon], zoom_start=12)
 
-            path = [(wp.location.lat, wp.location.lon) for wp in wps]
-            folium.PolyLine(route_plan.full_geometry, color="#3b82f6", weight=4, opacity=0.7).add_to(fmap)
+            optimized_geometry = route_plan.full_geometry[::3]
+            folium.PolyLine(optimized_geometry, color="#3b82f6", weight=4, opacity=0.7).add_to(fmap)
 
             # Coverage-zone radius: half the min waypoint spacing
             zone_radius_m = (DEFAULT_WAYPOINT_THRESHOLD_KM / 2) * 1000
