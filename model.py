@@ -105,4 +105,3 @@ class MainModel:
                                                self.curr_time, 
                                                self.waypoints)
         
-        

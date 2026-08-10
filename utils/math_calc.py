@@ -4,6 +4,11 @@ import math
 from typing import List
 from utils.utilities import Coordinate
 
+# Minimum spacing (km) between kept waypoints. Reused by the GUI to size the
+# "coverage zone" circle drawn around each waypoint, so the visual matches
+# what's actually being sampled.
+DEFAULT_WAYPOINT_THRESHOLD_KM: float = 2.0
+
 def haversine_distance(p1: Coordinate, p2: Coordinate) -> float:
     """Calculates the distance between two coordinates in kilometers."""
     R = 6371.0
@@ -27,7 +32,7 @@ def haversine_distance(p1: Coordinate, p2: Coordinate) -> float:
 
 def filter_waypoints(
     coordinates: List[Coordinate], 
-    threshold_km: float = 2.0
+    threshold_km: float = DEFAULT_WAYPOINT_THRESHOLD_KM
     ) -> List[Coordinate]:
     
     if not coordinates:

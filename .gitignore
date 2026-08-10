@@ -1,5 +1,6 @@
-.env
-__pycache__
-utils/__pycache__
-services/__pycache__
-.pyc
+.env 
+__pycache__/ 
+*.pyc build/ 
+dist/ 
+*.spec 
+.streamlit/secrets.toml

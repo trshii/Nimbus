@@ -1,2 +1,7 @@
-python-dotenv
+streamlit
+streamlit-folium
+folium
 polyline
+requests
+python-dotenv
+pandas

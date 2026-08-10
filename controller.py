@@ -2,9 +2,10 @@
 
 from model import MainModel
 from view_tmnl import ViewTmnl
+from view_gui import ViewGUI
 
 class MainController:
-    def __init__(self, model: MainModel, view: ViewTmnl) -> None:
+    def __init__(self, model: MainModel, view: ViewTmnl | ViewGUI) -> None:
         self.m = model
         self.v = view
         pass
