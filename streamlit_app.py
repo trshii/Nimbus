@@ -1,5 +1,6 @@
 import os
 from datetime import datetime, date, time
+from typing import Dict, Any, List
 
 import textwrap
 import streamlit as st
@@ -10,14 +11,40 @@ from dotenv import load_dotenv
 from model import MainModel
 from controller import MainController
 from view_gui import ViewGUI
+from services.geocoder_provider import GeocoderProvider
 from utils.utilities import Coordinate, TravelMode
 
 load_dotenv()
 
 st.set_page_config(page_title="Nimbus", page_icon="🌦️", layout="wide")
 
+# In streamlit_app.py, near the top of the file
+
+@st.dialog("Welcome to Nimbus! ⛅")
+def tutorial_modal():
+    st.write("Plan your two-wheeler routes and avoid the rain. Here is how it works:")
+    
+    st.markdown("""
+    * **Set Locations:** Use the sidebar to search for your start and end points (Address needs to be specific according to OpenStreetMap). You can also click directly on the map to drop a pin.
+    * **Set the Time:** Choose your exact departure time (Note that traffic is not taken into account yet).
+    * **Ride Ready:** Click **Plan Route**. Nimbus will calculate your ETA and check the weather at every waypoint, so you know exactly what to expect before you go out.
+    """)
+    
+    # A button to close the modal
+    if st.button("Let's Ride!", type="primary", use_container_width=True):
+        st.session_state.tutorial_viewed = True
+        st.rerun()
+        
+if "tutorial_viewed" not in st.session_state:
+    st.session_state.tutorial_viewed = False
+
+if not st.session_state.tutorial_viewed:
+    tutorial_modal()
+
 # ---- Header: title + description (left) / credentials + logos (right) ----
 header_left, header_right = st.columns([3, 2])
+
+
 
 with header_left:
     st.markdown("## 🌦️ Nimbus")
@@ -67,6 +94,9 @@ if not API_KEY:
     st.error("Server is missing ORS_API_KEY. Set it in .env (local) or Secrets (Streamlit Cloud).")
     st.stop()
 
+# ORS also backs the Pelias geocoding endpoints, so we reuse the same key.
+geocoder = GeocoderProvider(API_KEY)
+
 # ---- Session state ----
 if "origin" not in st.session_state:
     st.session_state.origin = {"lat": 14.5542, "lon": 121.0676, "name": "Buting, Pasig City"}
@@ -79,17 +109,65 @@ if "route_plan" not in st.session_state:
 if "error" not in st.session_state:
     st.session_state.error = None
 
+
+def _render_address_search(section_label: str, state_key: str, geocoder: GeocoderProvider) -> None:
+    """Renders a free-text address search box + match picker for a
+    session_state target ("origin" or "destination"). Confirming a match
+    overwrites that target's name/lat/lon in session_state.
+
+    Args:
+        section_label (str): Display label, e.g. "Origin"
+        state_key (str): Key into st.session_state ("origin" or "destination")
+        geocoder (GeocoderProvider): Shared geocoder instance
+    """
+    query_key = f"{state_key}_search_query"
+    select_key = f"{state_key}_search_select"
+    button_key = f"{state_key}_search_apply"
+
+    query: str = st.text_input(
+        f"Search {section_label.lower()} address",
+        key=query_key,
+        placeholder="e.g. University of the Philippines Diliman",
+    )
+
+    if not query.strip():
+        return
+
+    with st.spinner("Searching..."):
+        candidates: List[Dict[str, Any]] = geocoder.search_address(query)
+
+    if not candidates:
+        st.caption("No matches found.")
+        return
+
+    labels = [c["name"] for c in candidates]
+    chosen_label = st.selectbox(f"Matches for {section_label.lower()}", labels, key=select_key)
+    match = next((c for c in candidates if c["name"] == chosen_label), None)
+
+    if match is not None and st.button(f"Use this {section_label.lower()}", key=button_key):
+        st.session_state[state_key]["name"] = match["name"]
+        st.session_state[state_key]["lat"] = match["lat"]
+        st.session_state[state_key]["lon"] = match["lon"]
+        st.session_state[f"{state_key}_name_field"] = match["name"]
+        
+        st.rerun()
+
+
 # ---- Sidebar: trip details (no API key field) ----
 with st.sidebar:
     st.header("Trip Details")
 
     st.subheader("Origin")
-    st.session_state.origin["name"] = st.text_input("Origin name", st.session_state.origin["name"])
+    _render_address_search("Origin", "origin", geocoder)
+    st.session_state.origin["name"] = st.text_input(
+        "Origin name", st.session_state.origin["name"], key="origin_name_field"
+    )
     st.caption(f"📍 {st.session_state.origin['lat']:.4f}, {st.session_state.origin['lon']:.4f}")
 
     st.subheader("Destination")
+    _render_address_search("Destination", "destination", geocoder)
     st.session_state.destination["name"] = st.text_input(
-        "Destination name", st.session_state.destination["name"]
+        "Destination name", st.session_state.destination["name"], key="destination_name_field"
     )
     st.caption(f"📍 {st.session_state.destination['lat']:.4f}, {st.session_state.destination['lon']:.4f}")
 
@@ -129,7 +207,13 @@ with st.expander("📍 Pick points on the map", expanded=(st.session_state.route
         icon=folium.Icon(color="red"),
     ).add_to(pick_map)
 
-    click_result = st_folium(pick_map, width=None, height=400, key="picker_map")
+    click_result = st_folium(
+        pick_map, 
+        width=None, 
+        height=400, 
+        key="picker_map", 
+        returned_objects=["last_clicked"] 
+    )
 
     if click_result and click_result.get("last_clicked"):
         lat = click_result["last_clicked"]["lat"]
@@ -139,6 +223,14 @@ with st.expander("📍 Pick points on the map", expanded=(st.session_state.route
         if (round(current["lat"], 6), round(current["lon"], 6)) != (round(lat, 6), round(lon, 6)):
             st.session_state[target]["lat"] = lat
             st.session_state[target]["lon"] = lon
+            with st.spinner("Looking up address..."):
+                # Capture the returned name first
+                new_name = geocoder.reverse_geocode(lat, lon)
+                st.session_state[target]["name"] = new_name
+                
+                # NEW: Force the text input widget to update its visual value
+                st.session_state[f"{target}_name_field"] = new_name
+                
             st.rerun()
 
 # ---- Run + render result ----
