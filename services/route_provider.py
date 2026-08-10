@@ -62,7 +62,7 @@ class RouteProvider:
         
         for step in route_waypts_steps:
             start_idx, end_idx = step["way_points"]
-            step_name: str = step["name"].split(",")[0].strip()
+            step_name: str = step["name"]
             
             for i in range(start_idx, end_idx):
                 route_waypts_idx_name_map[i] = step_name

@@ -1,8 +1,7 @@
-# pyright: strict
-
 import os
 from datetime import datetime, date, time
 
+import textwrap
 import streamlit as st
 import folium
 from streamlit_folium import st_folium
@@ -15,9 +14,48 @@ from utils.utilities import Coordinate, TravelMode
 
 load_dotenv()
 
-st.set_page_config(page_title="Rain-Aware Route Planner", page_icon="🌦️", layout="wide")
-st.title("🌦️ Rain-Aware Route Planner")
-st.caption("Plan a route and see rain probability along each waypoint.")
+st.set_page_config(page_title="Nimbus", page_icon="🌦️", layout="wide")
+
+# ---- Header: title + description (left) / credentials + logos (right) ----
+header_left, header_right = st.columns([3, 2])
+
+with header_left:
+    st.markdown("## 🌦️ Nimbus")
+    # TODO: swap this line for your own one-line tagline
+    st.caption("Plan a route and see rain probability along each waypoint.")
+
+with header_right:
+    st.markdown(
+        textwrap.dedent(
+            """
+            <div style="display:flex; flex-direction:column; align-items:flex-end;
+                        justify-content:center; height:100%; padding-top:8px;">
+                <div style="font-size:0.7rem; color:#888; margin-bottom:6px;">Contact Me</div>
+                <div style="display:flex; gap:12px;">
+                    <!-- GitHub -->
+                    <a href="https://github.com/trshii" target="_blank" rel="noopener noreferrer"
+                       style="width:28px; height:28px; border-radius:50%; background:#e2e8f0;
+                              display:flex; align-items:center; justify-content:center; text-decoration:none;">
+                        <img src="https://api.iconify.design/mdi:github.svg?color=%2364748b" width="18" height="18" alt="GitHub"/>
+                    </a>
+                    <!-- Facebook -->
+                    <a href="https://facebook.com/treixee.cruz" target="_blank" rel="noopener noreferrer"
+                       style="width:28px; height:28px; border-radius:50%; background:#e2e8f0;
+                              display:flex; align-items:center; justify-content:center; text-decoration:none;">
+                        <img src="https://api.iconify.design/mdi:facebook.svg?color=%2364748b" width="18" height="18" alt="Facebook"/>
+                    </a>
+                    <!-- Gmail -->
+                    <a href="mailto:treixee@gmail.com" target="_blank" rel="noopener noreferrer"
+                       style="width:28px; height:28px; border-radius:50%; background:#e2e8f0;
+                              display:flex; align-items:center; justify-content:center; text-decoration:none;">
+                        <img src="https://api.iconify.design/mdi:gmail.svg?color=%2364748b" width="18" height="18" alt="Gmail"/>
+                    </a>
+                </div>
+            </div>
+            """
+        ),
+        unsafe_allow_html=True,
+    )
 
 # ---- API key: your key, not the visitor's. No field shown in the UI. ----
 try:

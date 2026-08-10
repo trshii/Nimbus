@@ -6,7 +6,7 @@ from services.weather_provider import WeatherProvider
 from datetime import datetime
 from utils.math_calc import filter_waypoints
 from utils.utilities import *
-from typing import *
+from typing import Dict, Any
 
 class MainModel:
     def __init__(self, 
