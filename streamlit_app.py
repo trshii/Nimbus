@@ -167,8 +167,10 @@ with st.sidebar:
         unsafe_allow_html=True
     )
     
-    st.header("Trip Details")
+    submitted = st.button("Plan Route", type="primary", width="stretch")
 
+    st.header("Trip Details")
+    
     st.subheader("Origin")
     _render_address_search("Origin", "origin", geocoder)
     st.session_state.origin["name"] = st.text_input(
@@ -193,7 +195,6 @@ with st.sidebar:
     trip_date = st.date_input("Departure date", value=date.today())
     trip_time = st.time_input("Departure time", value=time(hour=8, minute=0))
 
-    submitted = st.button("Plan Route", type="primary", width="stretch")
 
 # ---- Point picker: click the map instead of typing lat/lon ----
 # ---- Point picker: click the map instead of typing lat/lon ----
