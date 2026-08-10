@@ -40,6 +40,9 @@ if "tutorial_viewed" not in st.session_state:
 
 if not st.session_state.tutorial_viewed:
     tutorial_modal()
+    
+if "last_processed_click" not in st.session_state:
+    st.session_state.last_processed_click = None
 
 # ---- Header: title + description (left) / credentials + logos (right) ----
 header_left, header_right = st.columns([3, 2])
@@ -155,6 +158,15 @@ def _render_address_search(section_label: str, state_key: str, geocoder: Geocode
 
 # ---- Sidebar: trip details (no API key field) ----
 with st.sidebar:
+    st.markdown(
+        """
+        <div style="display: flex; justify-content: flex-start; align-items: center; margin-bottom: 1rem;">
+            <h2 style="margin: 0; padding: 0;">🌦️ Nimbus</h2>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+    
     st.header("Trip Details")
 
     st.subheader("Origin")
@@ -184,6 +196,7 @@ with st.sidebar:
     submitted = st.button("Plan Route", type="primary", width="stretch")
 
 # ---- Point picker: click the map instead of typing lat/lon ----
+# ---- Point picker: click the map instead of typing lat/lon ----
 with st.expander("📍 Pick points on the map", expanded=(st.session_state.route_plan is None)):
     st.session_state.picking = st.radio(
         "Clicking the map sets:",
@@ -196,12 +209,15 @@ with st.expander("📍 Pick points on the map", expanded=(st.session_state.route
         location=[st.session_state.origin["lat"], st.session_state.origin["lon"]],
         zoom_start=11,
     )
+
+    # Origin Pin
     folium.Marker(
         [st.session_state.origin["lat"], st.session_state.origin["lon"]],
         tooltip=st.session_state.origin["name"],
         icon=folium.Icon(color="green"),
     ).add_to(pick_map)
     
+    # Destination Pin
     folium.Marker(
         [st.session_state.destination["lat"], st.session_state.destination["lon"]],
         tooltip=st.session_state.destination["name"],
@@ -217,18 +233,53 @@ with st.expander("📍 Pick points on the map", expanded=(st.session_state.route
     )
 
     if click_result and click_result.get("last_clicked"):
-        lat = click_result["last_clicked"]["lat"]
-        lon = click_result["last_clicked"]["lng"]
+        lat = float(click_result["last_clicked"]["lat"])
+        lon = float(click_result["last_clicked"]["lng"])
         target = "origin" if st.session_state.picking == "Origin" else "destination"
-        current = st.session_state[target]
-        if (round(current["lat"], 6), round(current["lon"], 6)) != (round(lat, 6), round(lon, 6)):
-            st.session_state[target]["lat"] = lat
-            st.session_state[target]["lon"] = lon
-            with st.spinner("Looking up address..."):
-                # Capture the returned name first
-                new_name = geocoder.reverse_geocode(lat, lon)
-                st.session_state[target]["name"] = new_name
+        
+        # Create a unique key for this click event to prevent rapid duplicate triggers
+        click_id = (target, round(lat, 5), round(lon, 5))
+
+        if click_id != st.session_state.last_processed_click:
+            # 1. Lock this click signature immediately
+            st.session_state.last_processed_click = click_id
+
+            # 2. Add an animated pulsing loading marker directly onto the map UI
+            pulse_icon = folium.DivIcon(
+                html="""
+                <div style="
+                    width: 22px;
+                    height: 22px;
+                    background-color: #f97316;
+                    border-radius: 50%;
+                    border: 3px solid white;
+                    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+                    animation: pulse-ring 1s infinite ease-in-out;
+                "></div>
+                <style>
+                @keyframes pulse-ring {
+                    0% { transform: scale(0.7); opacity: 0.6; }
+                    50% { transform: scale(1.3); opacity: 1; }
+                    100% { transform: scale(0.7); opacity: 0.6; }
+                }
+                </style>
+                """
+            )
+            folium.Marker(
+                [lat, lon],
+                tooltip="⏳ Resolving address...",
+                icon=pulse_icon
+            ).add_to(pick_map)
+
+            # 3. Fetch address first, then write ALL attributes atomically
+            with st.spinner("Resolving location address..."):
+                fetched_name = geocoder.reverse_geocode(lat, lon)
                 
+                # Atomic session state write
+                st.session_state[target]["lat"] = lat
+                st.session_state[target]["lon"] = lon
+                st.session_state[target]["name"] = fetched_name
+
             st.rerun()
 
 # ---- Run + render result ----

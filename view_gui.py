@@ -1,7 +1,6 @@
 # pyright: strict
 
 import streamlit as st
-import pandas as pd
 import folium
 from streamlit_folium import st_folium
 from utils.utilities import RoutePlan
@@ -36,13 +35,11 @@ class ViewGUI:
         
         # 2. Render all new elements INSIDE the placeholder
         with self._ui_container.container():
-            # Expanded to 4 columns to include Arrival Time
             col1, col2, col3, col4 = st.columns(4)
             col1.metric("Origin", route_plan.origin)
             col2.metric("Destination", route_plan.destination)
             col3.metric("Departure", route_plan.departure_time.strftime("%H:%M, %b %d"))
             
-            # The arrival time is exactly the ETA of the final waypoint
             wps = route_plan.waypoints
             arrival_time = wps[-1].location.eta
             col4.metric("Arrival", arrival_time.strftime("%H:%M, %b %d"))
@@ -54,20 +51,16 @@ class ViewGUI:
             optimized_geometry = route_plan.full_geometry[::3]
             folium.PolyLine(optimized_geometry, color="#3b82f6", weight=4, opacity=0.7).add_to(fmap)
 
-            # Coverage-zone radius: half the min waypoint spacing
             zone_radius_m = (DEFAULT_WAYPOINT_THRESHOLD_KM / 2) * 1000
 
             for idx, wp in enumerate(wps, start=1):
                 loc = wp.location
                 color = _rain_color(wp.rain_probability)
-                
-                # Formatted ETA for the map tooltips
                 formatted_eta = loc.eta.strftime("%I:%M %p")
                 
                 popup = f"{idx}. {loc.name}<br>ETA: {formatted_eta}<br>Rain chance: {wp.rain_probability}%"
                 tooltip = f"{idx}. {loc.name} — {formatted_eta} — {wp.rain_probability}%"
 
-                # Low-opacity area = zone this weather sample stands in for
                 folium.Circle(
                     location=[loc.lat, loc.lon],
                     radius=zone_radius_m,
@@ -81,7 +74,6 @@ class ViewGUI:
                     tooltip=tooltip,
                 ).add_to(fmap)
 
-                # Solid dot = the actual waypoint at the circle's center
                 folium.CircleMarker(
                     location=[loc.lat, loc.lon],
                     radius=5,
@@ -99,24 +91,49 @@ class ViewGUI:
 
             st.subheader("Waypoint Summary")
             
-            # Added the ETA column to the dictionary compilation
-            rows = [
-                {
-                    "#": idx,
-                    "Location": wp.location.name,
-                    "ETA": wp.location.eta.strftime("%I:%M %p"),
-                    "Rain Chance (%)": wp.rain_probability,
-                }
-                for idx, wp in enumerate(wps, start=1)
-            ]
-            df = pd.DataFrame(rows)
-            st.dataframe(
-                df,
-                use_container_width=True,
-                hide_index=True,
-                column_config={
-                    "Rain Chance (%)": st.column_config.ProgressColumn(
-                        "Rain Chance (%)", min_value=0, max_value=100, format="%d%%"
-                    )
-                },
-            )
+            table_rows = ""
+            for idx, wp in enumerate(wps, start=1):
+                pop = wp.rain_probability
+                color = _rain_color(pop)
+                eta = wp.location.eta.strftime("%I:%M %p")
+                
+                # Removed hardcoded 'color: white' to let it inherit var(--text-color)
+                # Used var(--secondary-background-color) for the empty progress bar track
+                # Used rgba(128,128,128,0.2) for a theme-agnostic subtle border
+                table_rows += f"""
+                <tr style="border-bottom: 1px solid rgba(128, 128, 128, 0.2);">
+                    <td style="padding: 12px 8px; font-weight: bold;">{idx}</td>
+                    <td style="padding: 12px 8px;">{wp.location.name}</td>
+                    <td style="padding: 12px 8px;">{eta}</td>
+                    <td style="padding: 12px 8px;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <span style="min-width: 36px; color: {color}; font-weight: bold; text-align: right;">{pop}%</span>
+                            <div style="background-color: var(--secondary-background-color); border-radius: 6px; width: 100%; height: 10px; overflow: hidden;">
+                                <div style="background-color: {color}; width: {pop}%; height: 100%; border-radius: 6px;"></div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                """
+
+            # Bound the entire table to var(--text-color)
+            raw_html = f"""
+            <table style="width: 100%; text-align: left; border-collapse: collapse; margin-top: 8px; color: var(--text-color);">
+                <thead>
+                    <tr style="border-bottom: 2px solid rgba(128, 128, 128, 0.3); font-size: 0.9rem;">
+                        <th style="padding: 10px 8px;">#</th>
+                        <th style="padding: 10px 8px;">Location</th>
+                        <th style="padding: 10px 8px;">ETA</th>
+                        <th style="padding: 10px 8px; width: 35%;">Rain Chance</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {table_rows}
+                </tbody>
+            </table>
+            """
+            
+            # Remove all leading spaces from every line to prevent Markdown code-block triggering
+            clean_html = "\n".join(line.strip() for line in raw_html.splitlines() if line.strip())
+            
+            st.markdown(clean_html, unsafe_allow_html=True)
