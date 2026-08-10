@@ -1,5 +1,6 @@
 #pyright: strict
 
+import streamlit as st
 import requests
 from utils.utilities import *
 from utils.adapter import ORSProfileAdapter
@@ -9,9 +10,10 @@ from datetime import timedelta
 class RouteProvider:
     def __init__(self) -> None:
         pass
-        
-    def get_open_route(self, 
-                       api_key: str, 
+       
+    @staticmethod
+    @st.cache_data(show_spinner=False, ttl=86400)
+    def get_open_route(api_key: str, 
                        mode: TravelMode, 
                        origin: List[float], 
                        destination: List[float]

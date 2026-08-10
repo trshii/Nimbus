@@ -22,7 +22,7 @@ header_left, header_right = st.columns([3, 2])
 with header_left:
     st.markdown("## 🌦️ Nimbus")
     # TODO: swap this line for your own one-line tagline
-    st.caption("Plan a route and see rain probability along each waypoint.")
+    st.caption("Plan a route and see rain probability along each waypoint (Does not support live traffic data).")
 
 with header_right:
     st.markdown(
