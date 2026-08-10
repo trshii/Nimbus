@@ -11,6 +11,7 @@ type coord = Tuple[float, float]
 class Coordinate:
     lon: float
     lat: float
+    idx: Optional[int]
     name: Optional[str]
     
     @property
@@ -21,7 +22,7 @@ class Coordinate:
 class Waypoint:
     location: Coordinate
     rain_probability: float
-    #eta: datetime
+   #eta: datetime
     
 @dataclass 
 class RoutePlan:

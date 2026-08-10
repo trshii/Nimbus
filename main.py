@@ -5,10 +5,12 @@ from utils.utilities import *
 from dotenv import load_dotenv
 from model import MainModel
 from datetime import datetime
+from view_tmnl import ViewTmnl
+from controller import MainController
 
 if __name__ == "__main__":
     time_start = datetime.now()
-    print(time_start)
+    # print(time_start)
 
     load_dotenv()
     
@@ -16,7 +18,10 @@ if __name__ == "__main__":
     if ORS_API_KEY is None:
         raise ValueError("API Key does not exist!")
     
-    controller = MainModel(ORS_API_KEY, time_start)
-    controller.run()
+    m = MainModel(ORS_API_KEY, time_start)
+    v = ViewTmnl()
+    c = MainController(m, v)
+    
+    c.run()
 
     
