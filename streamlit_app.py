@@ -31,7 +31,7 @@ def tutorial_modal():
     """)
     
     # A button to close the modal
-    if st.button("Let's Ride!", type="primary", use_container_width=True):
+    if st.button("Let's Ride!", type="primary", width="stretch"):
         st.session_state.tutorial_viewed = True
         st.rerun()
         
@@ -160,14 +160,14 @@ with st.sidebar:
     st.subheader("Origin")
     _render_address_search("Origin", "origin", geocoder)
     st.session_state.origin["name"] = st.text_input(
-        "Origin name", st.session_state.origin["name"], key="origin_name_field"
+        "Origin name", st.session_state.origin["name"]
     )
     st.caption(f"📍 {st.session_state.origin['lat']:.4f}, {st.session_state.origin['lon']:.4f}")
 
     st.subheader("Destination")
     _render_address_search("Destination", "destination", geocoder)
     st.session_state.destination["name"] = st.text_input(
-        "Destination name", st.session_state.destination["name"], key="destination_name_field"
+        "Destination name", st.session_state.destination["name"]
     )
     st.caption(f"📍 {st.session_state.destination['lat']:.4f}, {st.session_state.destination['lon']:.4f}")
 
@@ -181,7 +181,7 @@ with st.sidebar:
     trip_date = st.date_input("Departure date", value=date.today())
     trip_time = st.time_input("Departure time", value=time(hour=8, minute=0))
 
-    submitted = st.button("Plan Route", type="primary", use_container_width=True)
+    submitted = st.button("Plan Route", type="primary", width="stretch")
 
 # ---- Point picker: click the map instead of typing lat/lon ----
 with st.expander("📍 Pick points on the map", expanded=(st.session_state.route_plan is None)):
@@ -228,9 +228,6 @@ with st.expander("📍 Pick points on the map", expanded=(st.session_state.route
                 # Capture the returned name first
                 new_name = geocoder.reverse_geocode(lat, lon)
                 st.session_state[target]["name"] = new_name
-                
-                # NEW: Force the text input widget to update its visual value
-                st.session_state[f"{target}_name_field"] = new_name
                 
             st.rerun()
 
