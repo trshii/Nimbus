@@ -58,7 +58,7 @@ class MainModel:
                                                     )
         
         if self.raw_route_plan is None:
-            raise ValueError("Route not fetched properly!")
+            raise ValueError("Route not fetched properly! (Make sure points are near roads!)")
         
         # sets route information
         self.route_summary = self.route_api.get_route_summary(self.raw_route_plan)
