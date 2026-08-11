@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Nimbus is a global routing app that takes into account the weather of certain points throughout the planned route.
+Nimbus predicts the weather along your ride by pairing forecast data with your calculated arrival time at every waypoint.
 
 ## Features
 
