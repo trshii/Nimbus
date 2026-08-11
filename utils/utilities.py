@@ -7,7 +7,7 @@ from enum import auto, Enum
 
 type coord = Tuple[float, float]
 
-@dataclass
+@dataclass(unsafe_hash=True)
 class Coordinate:
     lon: float
     lat: float

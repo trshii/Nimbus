@@ -85,15 +85,19 @@ class MainModel:
         self.route_coord_list = filter_waypoints(self.route_coord_list)
         self.route_coord_list[0].name = self.origin.name
         self.route_coord_list[-1].name = self.destination.name
+        self.arrival_time = self.route_coord_list[-1].eta
         
         # print(f"Filtered Node Count (2km Threshold): {len(self.route_coord_list)}")
         # print(f"Coordinates: {self.route_coord_list}")
         
     def set_weather_for_coords(self) -> None:
         weather_api = WeatherProvider()
+        assert isinstance(self.arrival_time, datetime)
+        self.rain_probability_map = weather_api.get_rain_probabillity_optimized(self.route_coord_list,
+                                                                                self.departure_time,
+                                                                                self.arrival_time)
         for point in self.route_coord_list:
-            assert isinstance(point.eta, datetime)
-            prob = weather_api.get_rain_probability(point, point.eta)
+            prob = self.rain_probability_map[point]
             self.rain_probability.append(prob)
             
         # print(f"Rain probability for each point: {self.rain_probability}")
